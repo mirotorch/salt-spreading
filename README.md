@@ -14,6 +14,11 @@ although it is recommended to take the time to adjust the parameters for more ef
 The first challenge is to define the method of the chromosome encoding. One proposed is to encode only salting actions, ignoring other movement along a graph. This would also require
 the preprocessing of nodes: we should know how long it takes to reach every node from the current state. 
 
+Preprocessing pipeline
+1. Read JSON with the problem.
+2. Create a line graph.
+3. Compute the distance matrix.
+4. Run memetic algorithm.
 
 ### References
 
