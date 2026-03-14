@@ -1,6 +1,5 @@
+from data_io import load_instance
 from jsonschema import ValidationError
-
-from solution.io import load_instance
 
 if __name__ == "__main__":
     problem = None
@@ -9,5 +8,5 @@ if __name__ == "__main__":
     except ValidationError as e:
         print("failed to validate input: " + str(e))
     except IOError as e:
-        print(e.strerror)
+        print(str(e))
 
