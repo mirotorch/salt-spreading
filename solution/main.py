@@ -1,6 +1,7 @@
 from data_io import load_instance
 from graph import construct_arc_graph, generate_task_distance_matrix
 from jsonschema import ValidationError
+from memetic import generate_initial_population
 
 if __name__ == "__main__":
     problem = None
@@ -17,4 +18,4 @@ if __name__ == "__main__":
         exit(1)
     graph = construct_arc_graph(problem)
     matrix = generate_task_distance_matrix(graph)
-    print(matrix)
+    population = generate_initial_population(graph["tasks"], matrix["from_tasks"])

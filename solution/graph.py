@@ -3,6 +3,7 @@ from __future__ import annotations
 import heapq
 from collections import defaultdict
 from dataclasses import dataclass
+from itertools import count
 from typing import Dict, Hashable, List, Tuple
 
 Arc = Tuple[str, str]
@@ -178,11 +179,12 @@ def dijkstra(
     if weight_key not in {"length", "time"}:
         raise ValueError("weight_key must be 'length' or 'time'")
 
+    tmp_id = count()
     dist: Dict[NodeId, float] = {start_node: 0.0}
-    pq: List[Tuple[float, NodeId]] = [(0.0, start_node)]
+    pq: List[Tuple[float, int, NodeId]] = [(0.0, next(tmp_id), start_node)]
 
     while pq:
-        current_dist, u = heapq.heappop(pq)
+        current_dist, _, u = heapq.heappop(pq)
         if current_dist > dist.get(u, float("inf")):
             continue
 
@@ -191,7 +193,7 @@ def dijkstra(
             nd = current_dist + weight
             if nd < dist.get(edge.target, float("inf")):
                 dist[edge.target] = nd
-                heapq.heappush(pq, (nd, edge.target))
+                heapq.heappush(pq, (nd, next(tmp_id), edge.target))
 
     return dist
 
@@ -251,7 +253,9 @@ def generate_task_distance_matrix(graph: dict, weight_key: str = "length") -> di
 
     # Task -> Task deadhead distances (excluding destination service cost).
     for from_task_id, from_task in graph["tasks"].items():
-        for to_task_id, to_task in graph["tasks"].items():
+        for to_task_id, to_task in list(
+            filter(lambda x: x[0] != from_task_id, graph["tasks"].items())
+        ):
             best = float("inf")
             for from_arc in from_task["arcs"]:
                 dist_map = arc_dists.get(from_arc, {})

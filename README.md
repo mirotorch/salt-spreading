@@ -14,6 +14,11 @@ although it is recommended to take the time to adjust the parameters for more ef
 The first challenge is to define the method of the chromosome encoding. One proposed is to encode only salting actions, ignoring other movement along a graph. This would also require
 the preprocessing of nodes: we should know how long it takes to reach every node from the current state. 
 
+While working on preprocessing, two approaches to chromosome encoding emerged: purely task-based and task-orientation method. I've decided to stick with
+the first variant, leaving the choice of orientation in E_R to the evaluation function. I've also added special READY nodes to my arc graph, which
+represent the state when the vehicle is ready to complete the task but still not started to traverse the arc. It should simplify the optimization since
+the cost of the task itself won't be encoded into chromosome. The routing then is separated from the execution costs.
+
 Preprocessing pipeline
 1. Read JSON with the problem.
 2. Create a line graph.
