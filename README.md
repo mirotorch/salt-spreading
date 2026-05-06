@@ -25,6 +25,12 @@ Preprocessing pipeline
 3. Compute the distance matrix.
 4. Run memetic algorithm.
 
+
+After the implementation of the creation of initial population, the next step is to create an evaluation mechaninsm which allows to compare chromosomes.
+According to the assignment, two strategies of handling returns to depot should be implemented: treat them as special action, being part of the optimization, and insert them during interpretation of
+result (not evaluation). It means we don't need to split routes manually (what i've started to do before) becase we'll either have returns (which cut the routes) as part of the chromosome
+or not have them as part of the optimization flow at all.
+
 ### References
 
 [Solving Various Classes of Arc Routing Problems with a Memetic Algorithm-based Framework](https://optimization-online.org/wp-content/uploads/2023/11/Arc_Routing_MA.pdf)
