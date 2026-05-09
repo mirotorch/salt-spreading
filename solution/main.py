@@ -1,48 +1,82 @@
-from pprint import pprint
+import argparse
+import sys
 
 from data_io import load_instance
 from graph import construct_arc_graph, generate_task_distance_matrix
 from jsonschema import ValidationError
-from memetic import (
-    evaluate_chromosome,
-    evaluate_chromosome_explicit,
-    generate_initial_population_explicit,
-    generate_initial_population_implicit,
-)
+from memetic import run_memetic
 
-if __name__ == "__main__":
-    problem = None
+
+def main() -> None:
+    parser = argparse.ArgumentParser(
+        description="Salt-spreading memetic algorithm",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    )
+    parser.add_argument("instance", help="Path to problem instance JSON")
+    parser.add_argument(
+        "-s", "--strategy",
+        choices=["implicit", "explicit"],
+        default="implicit",
+        help="Depot handling: implicit=post-processing (Strategy A), explicit=encoded in chromosome (Strategy B)",
+    )
+    parser.add_argument(
+        "-c", "--crossover",
+        choices=["single-point", "two-point", "uniform"],
+        default="two-point",
+        help="Crossover operator",
+    )
+    parser.add_argument("-p", "--population", type=int, default=50, metavar="N",
+                        help="Population size")
+    parser.add_argument("-g", "--generations", type=int, default=100, metavar="N",
+                        help="Number of generations")
+    parser.add_argument("--tournament", type=int, default=3, metavar="K",
+                        help="Tournament selection size")
+    parser.add_argument(
+        "-l", "--local-search",
+        choices=["none", "hill-climbing", "simulated-annealing"],
+        default="none",
+        dest="local_search",
+        help="Local search applied to each offspring (and initial population)",
+    )
+    parser.add_argument("--ls-iters", type=int, default=500, metavar="N",
+                        help="Neighborhood evaluations per local search call")
+    parser.add_argument("--sa-temp-factor", type=float, default=0.05, metavar="F",
+                        help="SA: T0 = initial_cost * factor")
+    parser.add_argument("--sa-cooling", type=float, default=0.995, metavar="R",
+                        help="SA: geometric cooling rate per iteration")
+    parser.add_argument("--seed", type=int, default=42, help="Random seed")
+    args = parser.parse_args()
+
     try:
-        problem = load_instance("../salt-spreading/data/belben/belben.json")
+        problem = load_instance(args.instance)
     except ValidationError as e:
-        print("failed to validate input: " + str(e))
-        exit(1)
+        print(f"validation error: {e.message}", file=sys.stderr)
+        sys.exit(1)
     except IOError as e:
-        print(str(e))
-        exit(1)
-    if problem is None:
-        print("unknown input error")
-        exit(1)
+        print(str(e), file=sys.stderr)
+        sys.exit(1)
 
     graph = construct_arc_graph(problem)
     matrix_len = generate_task_distance_matrix(graph, weight_key="length")
     matrix_time = generate_task_distance_matrix(graph, weight_key="time")
-    vehicles = problem["vehicles"]
-    vehicle_capacity = vehicles[0]["capacity"]
 
-    pop_implicit = generate_initial_population_implicit(graph["tasks"], matrix_len["from_tasks"])
-    pop_explicit = generate_initial_population_explicit(
-        graph["tasks"], matrix_len["from_tasks"], vehicle_capacity
+    best_chrom, best_len, best_time = run_memetic(
+        problem, graph, matrix_len, matrix_time,
+        strategy=args.strategy,
+        crossover_method=args.crossover,
+        local_search=args.local_search,
+        population_size=args.population,
+        generations=args.generations,
+        tournament_size=args.tournament,
+        ls_iters=args.ls_iters,
+        sa_temp_factor=args.sa_temp_factor,
+        sa_cooling_rate=args.sa_cooling,
+        seed=args.seed,
     )
 
-    print("IMPLICIT POPULATION (Strategy A) — first 3 chromosomes:")
-    pprint(pop_implicit[:3])
-    print("-" * 40)
-    print("EXPLICIT POPULATION (Strategy B) — first 3 chromosomes:")
-    pprint(pop_explicit[:3])
-    print("-" * 40)
+    print(f"\nbest_length={best_len:.4f}  best_time={best_time:.4f}")
+    print(f"chromosome: {best_chrom}")
 
-    cost_a = evaluate_chromosome(pop_implicit[0], graph, matrix_len, matrix_time, vehicles)
-    cost_b = evaluate_chromosome_explicit(pop_explicit[0], graph, matrix_len, matrix_time, vehicles)
-    print(f"Strategy A eval (length, time): {cost_a}")
-    print(f"Strategy B eval (length, time): {cost_b}")
+
+if __name__ == "__main__":
+    main()
