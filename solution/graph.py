@@ -61,8 +61,8 @@ def construct_arc_graph(data: dict) -> dict:
         "ready_nodes": {},  # {arc: ("READY", arc)}
     }
 
-    u_turn_forbidden = {str(x["label"]) for x in data.get("U", [])}
-    graph["u_turn_forbidden"] = u_turn_forbidden
+    u_turn_allowed = {str(x["label"]) for x in data.get("U", [])}
+    graph["u_turn_forbidden"] = u_turn_allowed  # legacy key kept; semantics: nodes where U-turns ARE allowed
 
     # 1) Collect all traversable arcs and all required tasks.
     all_arcs: Dict[Arc, dict] = {}
@@ -111,7 +111,7 @@ def construct_arc_graph(data: dict) -> dict:
         for arc2 in outgoing.get(v, []):
             _, w = arc2
             is_u_turn = w == u
-            if is_u_turn and v in u_turn_forbidden:
+            if is_u_turn and v not in u_turn_allowed:
                 continue
             cost = all_arcs[arc2]
             graph["adj"][arc1].append(
@@ -164,7 +164,7 @@ def construct_arc_graph(data: dict) -> dict:
             for pred in incoming.get(x, []):
                 pu, pv = pred
                 is_u_turn = service_arc[1] == pu
-                if is_u_turn and pv in u_turn_forbidden:
+                if is_u_turn and pv not in u_turn_allowed:
                     continue
                 graph["adj"][pred].append(
                     Transition(target=ready_node, length=0.0, time=0.0)
@@ -196,6 +196,57 @@ def dijkstra(
                 heapq.heappush(pq, (nd, next(tmp_id), edge.target))
 
     return dist
+
+
+def dijkstra_with_pred(
+    adj: Dict[NodeId, List[Transition]], start_node: NodeId, weight_key: str = "length"
+) -> Tuple[Dict[NodeId, float], Dict[NodeId, NodeId]]:
+    """Dijkstra returning distances and a predecessor map for path reconstruction.
+
+    pred[node] = the node we arrived from when relaxing to node.
+    Used by trace_path to recover the actual arc sequence.
+    """
+    if weight_key not in {"length", "time"}:
+        raise ValueError("weight_key must be 'length' or 'time'")
+
+    tmp_id = count()
+    dist: Dict[NodeId, float] = {start_node: 0.0}
+    pred: Dict[NodeId, NodeId] = {}
+    pq: List[Tuple[float, int, NodeId]] = [(0.0, next(tmp_id), start_node)]
+
+    while pq:
+        current_dist, _, u = heapq.heappop(pq)
+        if current_dist > dist.get(u, float("inf")):
+            continue
+
+        for edge in adj.get(u, []):
+            weight = edge.length if weight_key == "length" else edge.time
+            nd = current_dist + weight
+            if nd < dist.get(edge.target, float("inf")):
+                dist[edge.target] = nd
+                pred[edge.target] = u
+                heapq.heappush(pq, (nd, next(tmp_id), edge.target))
+
+    return dist, pred
+
+
+def trace_path(pred: Dict[NodeId, NodeId], source: NodeId, dest: NodeId) -> List[NodeId]:
+    """Walk the predecessor map backward from dest to source.
+
+    Returns the forward node sequence [source, …, dest], or [] if dest is unreachable.
+    """
+    if dest == source:
+        return [source]
+    path: List[NodeId] = []
+    node = dest
+    while node != source:
+        path.append(node)
+        node = pred.get(node)
+        if node is None:
+            return []
+    path.append(source)
+    path.reverse()
+    return path
 
 
 def generate_arc_distance_matrix(
