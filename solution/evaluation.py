@@ -2,7 +2,9 @@ from __future__ import annotations
 
 from typing import Dict, Final, List
 
-DEPOT: Final[int] = -1  # depot-return gene in explicit chromosomes; never a valid task ID
+DEPOT: Final[
+    int
+] = -1  # depot-return gene in explicit chromosomes; never a valid task ID
 
 
 def _insert_depot_returns(
@@ -10,7 +12,8 @@ def _insert_depot_returns(
     tasks: Dict[int, dict],
     vehicle_capacity: float,
 ) -> List[int]:
-    """Insert DEPOT (D) tokens wherever cumulative demand exceeds vehicle capacity.
+    """
+    Insert DEPOT (D) tokens wherever cumulative demand exceeds vehicle capacity.
 
     D tokens represent depot-return genes within a single vehicle's route.
     """
@@ -32,7 +35,8 @@ def _insert_depot_returns(
 
 
 def split_routes(chromosome, num_vehicles, route_cost):
-    """O(n² · K) DP assigning chromosome tasks to at most num_vehicles vehicles.
+    """
+    DP assigning chromosome tasks to at most num_vehicles vehicles.
 
     route_cost(p, i) must return the cost of serving chromosome[p..i] with one
     vehicle, including return-to-home.  Returns (best_cost, cuts) where cuts is
@@ -95,7 +99,8 @@ def _eval_segment(
     graph: dict,
     start_key,
 ) -> tuple[float, float]:
-    """Evaluate a task sequence from start_key without capacity tracking.
+    """
+    Evaluate a task sequence from start_key without capacity tracking.
 
     Returns (length_cost, time_cost).
     """
@@ -133,7 +138,8 @@ def _greedy_eval(
     matrix_len: dict,
     matrix_time: dict,
 ) -> tuple[float, float]:
-    """O(m) greedy route evaluator for chromosome[p..i].
+    """
+    O(m) greedy route evaluator for chromosome[p..i].
 
     Scans left-to-right; when a task's demand exceeds remaining salt, detours to
     the depot minimising (to-depot + from-depot-to-next-task) length, then refills.
@@ -167,7 +173,9 @@ def _greedy_eval(
                 if joint < best_joint:
                     best_joint = joint
                     best_to_l = to_l
-                    best_to_t = matrix_time["to_locations"].get(pos, {}).get(loc_node, INF)
+                    best_to_t = (
+                        matrix_time["to_locations"].get(pos, {}).get(loc_node, INF)
+                    )
                     best_dep_key = dep_key
             if best_dep_key is None:
                 return INF, INF
@@ -212,7 +220,8 @@ def _eval_explicit_segment(
     matrix_len: dict,
     matrix_time: dict,
 ) -> tuple[float, float]:
-    """Evaluate task_seq[p..i] following D-flags for trip boundaries.
+    """
+    Evaluate task_seq[p..i] following D-flags for trip boundaries.
 
     Returns (length, time) including return-to-home, or (inf, inf) if infeasible.
     """
@@ -259,7 +268,9 @@ def _eval_explicit_segment(
             total_t += best_to_t
             start_key = best_dep_key
 
-        seg_l, seg_t = _eval_segment(task_seq[ts : te + 1], matrix_len, matrix_time, graph, start_key)
+        seg_l, seg_t = _eval_segment(
+            task_seq[ts : te + 1], matrix_len, matrix_time, graph, start_key
+        )
         if seg_l == INF:
             return INF, INF
         total_l += seg_l
@@ -274,7 +285,7 @@ def _eval_explicit_segment(
 
 
 # ---------------------------------------------------------------------------
-# Public chromosome evaluators
+# Chromosome evaluators
 # ---------------------------------------------------------------------------
 
 
@@ -285,7 +296,8 @@ def evaluate_chromosome(
     matrix_time: dict,
     vehicles: List[dict],
 ) -> tuple[float, float]:
-    """Strategy A (implicit): greedy depot returns, DP vehicle assignment.
+    """
+    Strategy A (implicit): greedy depot returns, DP vehicle assignment.
 
     Returns (length, time).
     """
@@ -305,12 +317,22 @@ def evaluate_chromosome(
     def _eval(p: int, i: int) -> tuple[float, float]:
         if (p, i) not in _cache:
             _cache[(p, i)] = _greedy_eval(
-                p, i, home_key, home_loc, capacity, depot_pairs,
-                chromosome, graph, matrix_len, matrix_time,
+                p,
+                i,
+                home_key,
+                home_loc,
+                capacity,
+                depot_pairs,
+                chromosome,
+                graph,
+                matrix_len,
+                matrix_time,
             )
         return _cache[(p, i)]
 
-    best_cost, cuts = split_routes(chromosome, len(vehicles), lambda p, i: _eval(p, i)[0])
+    best_cost, cuts = split_routes(
+        chromosome, len(vehicles), lambda p, i: _eval(p, i)[0]
+    )
     if best_cost == INF:
         return INF, INF
 
@@ -333,7 +355,8 @@ def evaluate_chromosome_explicit(
     matrix_time: dict,
     vehicles: List[dict],
 ) -> tuple[float, float]:
-    """Strategy B (explicit): D tokens mark depot-return genes; vehicle splits via DP.
+    """
+    Strategy B (explicit): D tokens mark depot-return genes; vehicle splits via DP.
 
     Returns (length, time).
     """
@@ -361,7 +384,17 @@ def evaluate_chromosome_explicit(
 
     def route_cost(p: int, i: int) -> float:
         return _eval_explicit_segment(
-            p, i, task_seq, d_after, home_key, home_loc, capacity, depot_pairs, graph, matrix_len, matrix_time
+            p,
+            i,
+            task_seq,
+            d_after,
+            home_key,
+            home_loc,
+            capacity,
+            depot_pairs,
+            graph,
+            matrix_len,
+            matrix_time,
         )[0]
 
     best_cost, cuts = split_routes(task_seq, len(vehicles), route_cost)
@@ -372,7 +405,17 @@ def evaluate_chromosome_explicit(
     total_time = 0.0
     for p, i in cuts:
         seg_l, seg_t = _eval_explicit_segment(
-            p, i, task_seq, d_after, home_key, home_loc, capacity, depot_pairs, graph, matrix_len, matrix_time
+            p,
+            i,
+            task_seq,
+            d_after,
+            home_key,
+            home_loc,
+            capacity,
+            depot_pairs,
+            graph,
+            matrix_len,
+            matrix_time,
         )
         if seg_l == INF:
             return INF, INF

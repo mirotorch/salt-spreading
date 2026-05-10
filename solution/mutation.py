@@ -5,7 +5,6 @@ from typing import Dict, List
 
 from evaluation import DEPOT, _insert_depot_returns
 
-
 # ---------------------------------------------------------------------------
 # Task-level operators  (work on plain task-ID lists, no D tokens)
 # ---------------------------------------------------------------------------
@@ -68,8 +67,7 @@ def _mutate_d_insert(chromosome: List[int], rng: random.Random) -> List[int]:
     """Insert a D token after a random task that is not already followed by D."""
     n = len(chromosome)
     valid = [
-        i for i in range(n - 1)
-        if chromosome[i] != DEPOT and chromosome[i + 1] != DEPOT
+        i for i in range(n - 1) if chromosome[i] != DEPOT and chromosome[i + 1] != DEPOT
     ]
     if not valid:
         return chromosome[:]
@@ -118,7 +116,8 @@ def mutate(
     strategy: str,
     rng: random.Random,
 ) -> List[int]:
-    """Apply one random mutation to the chromosome.
+    """
+    Apply one random mutation to the chromosome.
 
     Implicit: picks uniformly from the four task-level operators.
     Explicit: 50 % task-level (strip D → mutate → reinsert D) / 50 % D-gene operators.

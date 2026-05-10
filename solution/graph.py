@@ -62,9 +62,9 @@ def construct_arc_graph(data: dict) -> dict:
     }
 
     u_turn_allowed = {str(x["label"]) for x in data.get("U", [])}
-    graph["u_turn_forbidden"] = u_turn_allowed  # legacy key kept; semantics: nodes where U-turns ARE allowed
+    graph["u_turn_forbidden"] = u_turn_allowed
 
-    # 1) Collect all traversable arcs and all required tasks.
+    # Collect all traversable arcs and all required tasks.
     all_arcs: Dict[Arc, dict] = {}
     task_id = 0
 
@@ -97,7 +97,7 @@ def construct_arc_graph(data: dict) -> dict:
 
     graph["arc_nodes"] = all_arcs
 
-    # 2) Index arcs by start/end vertex.
+    # Index arcs by start/end vertex.
     outgoing: Dict[str, List[Arc]] = defaultdict(list)
     incoming: Dict[str, List[Arc]] = defaultdict(list)
     for arc in all_arcs:
@@ -105,7 +105,7 @@ def construct_arc_graph(data: dict) -> dict:
         outgoing[u].append(arc)
         incoming[v].append(arc)
 
-    # 3) Arc-state transitions.
+    # Arc-state transitions.
     for arc1 in all_arcs:
         u, v = arc1
         for arc2 in outgoing.get(v, []):
@@ -118,9 +118,9 @@ def construct_arc_graph(data: dict) -> dict:
                 Transition(target=arc2, length=cost["len"], time=cost["time"])
             )
 
-    # 4) Virtual location nodes for homes and depots.
-    #    From a location node you can start with any outgoing arc and pay for it.
-    #    From any incoming arc you can reach the location node with zero extra cost.
+    # Virtual location nodes for homes and depots.
+    # From location node you can start with any outgoing arc and pay for it.
+    # From any incoming arc you can reach the location node with zero extra cost.
     for vehicle in data.get("vehicles", []):
         home = str(vehicle["home"])
         start_ref = StartRef(
@@ -145,8 +145,8 @@ def construct_arc_graph(data: dict) -> dict:
         for arc in incoming.get(label, []):
             graph["adj"][arc].append(Transition(target=loc_node, length=0.0, time=0.0))
 
-    # 5) Virtual READY nodes: deadhead distance to be ready to start service on arc.
-    #    Reaching READY(arc) means you are at arc[0] and may start servicing arc next.
+    # Virtual READY nodes: deadhead distance to be ready to start service on arc.
+    # Reaching READY(arc) means you are at arc[0] and may start servicing arc next.
     for task in graph["tasks"].values():
         for service_arc in task["arcs"]:
             ready_node = ("READY", service_arc)
@@ -201,7 +201,8 @@ def dijkstra(
 def dijkstra_with_pred(
     adj: Dict[NodeId, List[Transition]], start_node: NodeId, weight_key: str = "length"
 ) -> Tuple[Dict[NodeId, float], Dict[NodeId, NodeId]]:
-    """Dijkstra returning distances and a predecessor map for path reconstruction.
+    """
+    Dijkstra returning distances and a predecessor map for path reconstruction.
 
     pred[node] = the node we arrived from when relaxing to node.
     Used by trace_path to recover the actual arc sequence.
@@ -230,8 +231,11 @@ def dijkstra_with_pred(
     return dist, pred
 
 
-def trace_path(pred: Dict[NodeId, NodeId], source: NodeId, dest: NodeId) -> List[NodeId]:
-    """Walk the predecessor map backward from dest to source.
+def trace_path(
+    pred: Dict[NodeId, NodeId], source: NodeId, dest: NodeId
+) -> List[NodeId]:
+    """
+    Walk the predecessor map backward from dest to source.
 
     Returns the forward node sequence [source, …, dest], or [] if dest is unreachable.
     """

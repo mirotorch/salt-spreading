@@ -7,7 +7,6 @@ from evaluation import (
     _insert_depot_returns,
     evaluate_chromosome,
     evaluate_chromosome_explicit,
-    split_routes,
 )
 from local_search import hill_climbing, simulated_annealing
 from mutation import mutate
@@ -44,7 +43,8 @@ def run_memetic(
     seed: int = 42,
     verbose: bool = True,
 ) -> tuple[List[int], float, float, int]:
-    """Main memetic algorithm loop.
+    """
+    Main memetic algorithm loop.
 
     Returns (best_chromosome, best_length, best_time).
 
@@ -82,8 +82,11 @@ def run_memetic(
         from_tasks_fn: Callable = lambda t: t
     else:
         population = generate_initial_population_explicit(
-            tasks, matrix_len["from_tasks"], vehicle_capacity,
-            population_size=population_size, seed=seed,
+            tasks,
+            matrix_len["from_tasks"],
+            vehicle_capacity,
+            population_size=population_size,
+            seed=seed,
         )
         evaluate_fn = evaluate_chromosome_explicit
         to_tasks_fn = lambda c: [x for x in c if x != DEPOT]
@@ -138,13 +141,24 @@ def run_memetic(
     # --- local search dispatch ---
     _ls_fn: Optional[Callable] = None
     if local_search == "hill-climbing":
+
         def _ls_fn(chrom):
-            return hill_climbing(chrom, evaluate, to_tasks_fn, from_tasks_fn, rng, max_iters=ls_iters)
+            return hill_climbing(
+                chrom, evaluate, to_tasks_fn, from_tasks_fn, rng, max_iters=ls_iters
+            )
+
     elif local_search == "simulated-annealing":
+
         def _ls_fn(chrom):
             return simulated_annealing(
-                chrom, evaluate, to_tasks_fn, from_tasks_fn, rng,
-                max_iters=ls_iters, temp_init_factor=sa_temp_factor, cooling_rate=sa_cooling_rate,
+                chrom,
+                evaluate,
+                to_tasks_fn,
+                from_tasks_fn,
+                rng,
+                max_iters=ls_iters,
+                temp_init_factor=sa_temp_factor,
+                cooling_rate=sa_cooling_rate,
             )
 
     def apply_ls(chrom: List[int]) -> List[int]:
@@ -176,7 +190,9 @@ def run_memetic(
             p1 = tournament_select(population, fitness)
             p2 = tournament_select(population, fitness)
             c1, c2 = do_crossover(p1, p2)
-            offspring.extend([apply_ls(apply_mutation(c1)), apply_ls(apply_mutation(c2))])
+            offspring.extend(
+                [apply_ls(apply_mutation(c1)), apply_ls(apply_mutation(c2))]
+            )
         offspring = offspring[:population_size]
 
         new_fitness = [evaluate(c)[0] for c in offspring]

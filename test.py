@@ -30,7 +30,10 @@ sys.path.insert(0, _SOLUTION)
 os.chdir(_SOLUTION)
 
 from data_io import load_instance  # noqa: E402
-from graph import construct_arc_graph, generate_task_distance_matrix  # noqa: E402
+from graph import (
+    construct_arc_graph,  # noqa: E402
+    generate_task_distance_matrix,
+)
 from memetic import run_memetic  # noqa: E402
 
 STRATEGIES = ["implicit", "explicit"]
@@ -38,8 +41,14 @@ CROSSOVERS = ["single-point", "two-point", "uniform"]
 LOCAL_SEARCHES = ["none", "hill-climbing", "simulated-annealing"]
 
 CSV_FIELDS = [
-    "strategy", "crossover", "local_search", "seed",
-    "best_length", "best_time", "best_gen", "elapsed_s",
+    "strategy",
+    "crossover",
+    "local_search",
+    "seed",
+    "best_length",
+    "best_time",
+    "best_gen",
+    "elapsed_s",
     "chromosome",
 ]
 
@@ -51,23 +60,45 @@ def parse_args() -> argparse.Namespace:
     )
     p.add_argument("instance", help="Path to problem instance JSON")
     p.add_argument(
-        "-n", "--runs", type=int, default=3, metavar="N",
+        "-n",
+        "--runs",
+        type=int,
+        default=3,
+        metavar="N",
         help="Number of runs per combination (independently seeded)",
     )
-    p.add_argument("-p", "--population", type=int, default=50, metavar="N",
-                   help="Population size (shared across all combinations)")
-    p.add_argument("-g", "--generations", type=int, default=100, metavar="N",
-                   help="Number of generations (shared across all combinations)")
     p.add_argument(
-        "-o", "--output", default="results.csv",
+        "-p",
+        "--population",
+        type=int,
+        default=50,
+        metavar="N",
+        help="Population size (shared across all combinations)",
+    )
+    p.add_argument(
+        "-g",
+        "--generations",
+        type=int,
+        default=100,
+        metavar="N",
+        help="Number of generations (shared across all combinations)",
+    )
+    p.add_argument(
+        "-o",
+        "--output",
+        default="results.csv",
         help="Output CSV file (relative to project root)",
     )
     p.add_argument(
-        "--append", action="store_true",
+        "--append",
+        action="store_true",
         help="Append to existing CSV instead of overwriting",
     )
     p.add_argument(
-        "--master-seed", type=int, default=None, metavar="S",
+        "--master-seed",
+        type=int,
+        default=None,
+        metavar="S",
         help="Seed for generating run seeds (default: random)",
     )
     # Pass-through algorithm parameters
@@ -83,7 +114,11 @@ def main() -> None:
     args = parse_args()
 
     # Instance path may be relative to project root (before os.chdir).
-    instance_path = os.path.join(_ROOT, args.instance) if not os.path.isabs(args.instance) else args.instance
+    instance_path = (
+        os.path.join(_ROOT, args.instance)
+        if not os.path.isabs(args.instance)
+        else args.instance
+    )
 
     try:
         problem = load_instance(instance_path)
@@ -122,12 +157,19 @@ def main() -> None:
         for seed in seeds:
             run_idx += 1
             tag = f"{strategy}/{crossover}/{local_search}"
-            print(f"[{run_idx:>{len(str(total))}}/{total}]  {tag}  seed={seed}", end="  ", flush=True)
+            print(
+                f"[{run_idx:>{len(str(total))}}/{total}]  {tag}  seed={seed}",
+                end="  ",
+                flush=True,
+            )
 
             t0 = time.time()
             try:
                 best_chrom, best_len, best_time, best_gen = run_memetic(
-                    problem, graph, matrix_len, matrix_time,
+                    problem,
+                    graph,
+                    matrix_len,
+                    matrix_time,
                     strategy=strategy,
                     crossover_method=crossover,
                     local_search=local_search,
@@ -142,32 +184,38 @@ def main() -> None:
                     verbose=False,
                 )
                 elapsed = time.time() - t0
-                print(f"len={best_len:.2f}  time={best_time:.2f}  gen={best_gen}  ({elapsed:.1f}s)")
-                writer.writerow({
-                    "strategy": strategy,
-                    "crossover": crossover,
-                    "local_search": local_search,
-                    "seed": seed,
-                    "best_length": best_len,
-                    "best_time": best_time,
-                    "best_gen": best_gen,
-                    "elapsed_s": f"{elapsed:.2f}",
-                    "chromosome": str(best_chrom),
-                })
+                print(
+                    f"len={best_len:.2f}  time={best_time:.2f}  gen={best_gen}  ({elapsed:.1f}s)"
+                )
+                writer.writerow(
+                    {
+                        "strategy": strategy,
+                        "crossover": crossover,
+                        "local_search": local_search,
+                        "seed": seed,
+                        "best_length": best_len,
+                        "best_time": best_time,
+                        "best_gen": best_gen,
+                        "elapsed_s": f"{elapsed:.2f}",
+                        "chromosome": str(best_chrom),
+                    }
+                )
             except Exception as exc:
                 elapsed = time.time() - t0
                 print(f"ERROR: {exc}")
-                writer.writerow({
-                    "strategy": strategy,
-                    "crossover": crossover,
-                    "local_search": local_search,
-                    "seed": seed,
-                    "best_length": "ERROR",
-                    "best_time": "ERROR",
-                    "best_gen": "ERROR",
-                    "elapsed_s": f"{elapsed:.2f}",
-                    "chromosome": str(exc),
-                })
+                writer.writerow(
+                    {
+                        "strategy": strategy,
+                        "crossover": crossover,
+                        "local_search": local_search,
+                        "seed": seed,
+                        "best_length": "ERROR",
+                        "best_time": "ERROR",
+                        "best_gen": "ERROR",
+                        "elapsed_s": f"{elapsed:.2f}",
+                        "chromosome": str(exc),
+                    }
+                )
             csv_file.flush()
 
     csv_file.close()

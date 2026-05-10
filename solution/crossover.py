@@ -7,7 +7,8 @@ from typing import List
 def crossover_single_point(
     parent1: List[int], parent2: List[int], rng: random.Random
 ) -> tuple[List[int], List[int]]:
-    """Single-point order-preserving crossover.
+    """
+    Single-point order-preserving crossover.
 
     Child1 takes parent1[:cut] then fills remaining positions with parent2's
     tasks in their original relative order.  Child2 is the mirror operation.
@@ -26,7 +27,8 @@ def crossover_single_point(
 def crossover_two_point(
     parent1: List[int], parent2: List[int], rng: random.Random
 ) -> tuple[List[int], List[int]]:
-    """Two-point Order Crossover (OX1).
+    """
+    Two-point Order Crossover (OX1).
 
     The segment parent1[c1:c2] is preserved in child1; remaining positions are
     filled with parent2's tasks starting from c2, wrapping around.
@@ -54,7 +56,8 @@ def crossover_two_point(
 def crossover_uniform(
     parent1: List[int], parent2: List[int], rng: random.Random
 ) -> tuple[List[int], List[int]]:
-    """Position-Based Crossover (PBX / uniform).
+    """
+    Position-Based Crossover (PBX / uniform).
 
     A random bitmask selects positions child1 inherits from parent1; remaining
     positions are filled with parent2's tasks in their original relative order.

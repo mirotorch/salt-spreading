@@ -1,5 +1,5 @@
 """
-Route reconstruction and JSON export for the salt-spreading memetic algorithm.
+Route reconstruction and JSON export.
 
 Converts a chromosome (task-ID permutation) into two JSON output formats:
   - Arc-based  (Format 1): validated by support/validator.py
@@ -14,10 +14,10 @@ from typing import Dict, List, Tuple
 from evaluation import DEPOT, _greedy_eval, split_routes
 from graph import dijkstra_with_pred, trace_path
 
-
 # ---------------------------------------------------------------------------
 # Internal helpers
 # ---------------------------------------------------------------------------
+
 
 def _is_arc_node(node) -> bool:
     """True for arc-state nodes (u, v) — both elements are strings."""
@@ -43,6 +43,7 @@ def _depot_map(problem: dict) -> Dict[str, dict]:
 # Per-vehicle route reconstruction
 # ---------------------------------------------------------------------------
 
+
 def reconstruct_vehicle_route(
     task_ids: List[int],
     graph: dict,
@@ -50,7 +51,8 @@ def reconstruct_vehicle_route(
     depot_map: Dict[str, dict],
     vehicle_capacity: float,
 ) -> List[dict]:
-    """Reconstruct the full arc-by-arc route for one vehicle's task sequence.
+    """
+    Reconstruct the full arc-by-arc route for one vehicle's task sequence.
 
     For each task:
       1. If residual salt is insufficient, detour through the cheapest depot.
@@ -122,6 +124,7 @@ def reconstruct_vehicle_route(
 # Vehicle-assignment helpers
 # ---------------------------------------------------------------------------
 
+
 def _split_implicit(
     chromosome: List[int],
     graph: dict,
@@ -141,8 +144,16 @@ def _split_implicit(
 
     def route_cost(p: int, i: int) -> float:
         return _greedy_eval(
-            p, i, home_key, home_loc, capacity, depot_pairs,
-            chromosome, graph, matrix_len, matrix_time,
+            p,
+            i,
+            home_key,
+            home_loc,
+            capacity,
+            depot_pairs,
+            chromosome,
+            graph,
+            matrix_len,
+            matrix_time,
         )[0]
 
     _, cuts = split_routes(chromosome, len(vehicles), route_cost)
@@ -180,6 +191,7 @@ def _split_explicit(
 # Public build functions
 # ---------------------------------------------------------------------------
 
+
 def build_solution_arcs(
     chromosome: List[int],
     graph: dict,
@@ -197,9 +209,13 @@ def build_solution_arcs(
     depot_map_data = _depot_map(problem)
 
     if strategy == "implicit":
-        task_slices = _split_implicit(chromosome, graph, matrix_len, matrix_time, vehicles)
+        task_slices = _split_implicit(
+            chromosome, graph, matrix_len, matrix_time, vehicles
+        )
     else:
-        task_slices = _split_explicit(chromosome, graph, matrix_len, matrix_time, vehicles)
+        task_slices = _split_explicit(
+            chromosome, graph, matrix_len, matrix_time, vehicles
+        )
 
     solution = []
     for vehicle, task_ids in zip(vehicles, task_slices):

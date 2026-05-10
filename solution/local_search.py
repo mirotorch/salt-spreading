@@ -34,7 +34,8 @@ def hill_climbing(
     rng: random.Random,
     max_iters: int = 500,
 ) -> List[int]:
-    """First-improvement hill climbing via random neighbourhood sampling.
+    """
+    First-improvement hill climbing via random neighbourhood sampling.
 
     to_tasks_fn / from_tasks_fn handle strategy-specific DEPOT encoding:
       implicit  — both are identity functions
@@ -68,7 +69,8 @@ def simulated_annealing(
     temp_init_factor: float = 0.05,
     cooling_rate: float = 0.995,
 ) -> List[int]:
-    """Simulated annealing with geometric cooling.
+    """
+    Simulated annealing with geometric cooling.
 
     T0 = initial_cost * temp_init_factor.
     Returns the best solution encountered, not necessarily the last accepted.

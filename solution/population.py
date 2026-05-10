@@ -3,7 +3,7 @@ from __future__ import annotations
 import random
 from typing import Dict, List
 
-from evaluation import DEPOT, _insert_depot_returns
+from evaluation import _insert_depot_returns
 
 
 def generate_initial_population_implicit(
@@ -14,7 +14,8 @@ def generate_initial_population_implicit(
     rcl_size: int = 3,
     seed: int = 42,
 ) -> List[List[int]]:
-    """Strategy A: pure task-ID permutations, no depot tokens.
+    """
+    Strategy A: pure task-ID permutations, no depot tokens.
 
     Mix of greedy-randomised (RCL) and fully random chromosomes.
     """
@@ -58,7 +59,9 @@ def generate_initial_population_implicit(
             current = chosen
         return chromosome
 
-    num_greedy = max(0, min(population_size, int(round(population_size * greedy_ratio))))
+    num_greedy = max(
+        0, min(population_size, int(round(population_size * greedy_ratio)))
+    )
     population = [greedy_randomized() for _ in range(num_greedy)]
     population += [random_chromosome() for _ in range(population_size - num_greedy)]
     return population
@@ -73,7 +76,8 @@ def generate_initial_population_explicit(
     rcl_size: int = 3,
     seed: int = 42,
 ) -> List[List[int]]:
-    """Strategy B: task-ID permutations with D tokens inserted where capacity demands.
+    """
+    Strategy B: task-ID permutations with D tokens inserted where capacity demands.
 
     D tokens represent depot-return genes within a single vehicle's route.
     """
@@ -117,7 +121,9 @@ def generate_initial_population_explicit(
             current = chosen
         return _insert_depot_returns(ordered, tasks, vehicle_capacity)
 
-    num_greedy = max(0, min(population_size, int(round(population_size * greedy_ratio))))
+    num_greedy = max(
+        0, min(population_size, int(round(population_size * greedy_ratio)))
+    )
     population = [greedy_randomized() for _ in range(num_greedy)]
     population += [random_chromosome() for _ in range(population_size - num_greedy)]
     return population
